@@ -23,7 +23,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-public class ChatController {
+public class ChatClientController {
 
     public final ChatClient chatClient;
 
