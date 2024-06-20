@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @Description:
+ * @Description: AI聊天接口
  * @Author: Simon Mau
  * @Date: 2024/6/17 15:36
  */
@@ -28,10 +28,24 @@ public class ChatController {
     public final ChatClient chatClient;
 
     /**
+     * 简单的写死的,直接返回全部结果,不是流式
+     */
+    @GetMapping(value = "/ai/simple")
+    public String simpleChat(
+            @RequestParam(value = "userMessage", defaultValue = "给我讲个笑话") String userMessage
+    ) {
+        System.out.println("接收到请求");
+        return chatClient.prompt()
+                .user(userMessage)
+                .call()
+                .content();
+    }
+
+    /**
      * 简单的写死的,返回值类型为Flux<String>的聊天接口,格式为event-stream
      */
     @GetMapping(value = "/ai/stream", produces = "text/event-stream;charset=UTF-8")
-    public Flux<String> simpleChat() {
+    public Flux<String> simpleStreamChat() {
         System.out.println("接收到请求");
         return chatClient.prompt()
                 .user("给我讲个笑话")
@@ -67,36 +81,31 @@ public class ChatController {
         if (LocalCache.CACHE.get(chatId) != null) {
             // 从缓存中读取上一轮对话的chatId,然后继续对话
             List<Message> messages = (List<Message>) LocalCache.CACHE.get(chatId);
-            messages.add(new UserMessage(userMessage));
-            StringBuilder assistMessageBuilder = new StringBuilder();
-            return chatClient.prompt(new Prompt(messages))
-                    .stream()
-                    .content()
-                    .doOnNext(assistMessageBuilder::append)
-                    .doFinally(
-                            signalType -> {
-                                messages.add(new AssistantMessage(assistMessageBuilder.toString()));
-                                System.out.println(assistMessageBuilder.toString());
-                                LocalCache.CACHE.put(chatId, messages);
-                            }
-                    );
+            return getStringFlux(userMessage, chatId, messages);
         } else {
             // 本地为空,则发送新的对话请求,并缓存对话
             List<Message> messages = new ArrayList<>();
-            messages.add(new UserMessage(userMessage));
-            StringBuilder assistMessageBuilder = new StringBuilder();
-
-            return chatClient.prompt(new Prompt(messages))
-                    .stream()
-                    .content()
-                    .doOnNext(assistMessageBuilder::append)
-                    .doFinally(signalType -> {
-                                messages.add(new AssistantMessage(assistMessageBuilder.toString()));
-                                System.out.println(assistMessageBuilder.toString());
-                                LocalCache.CACHE.put(chatId, messages);
-                            }
-                    );
+            return getStringFlux(userMessage, chatId, messages);
         }
+    }
+
+    private Flux<String> getStringFlux(
+            @RequestParam(value = "userMessage", defaultValue = "给我讲个笑话") String userMessage,
+            @RequestParam("chatId") String chatId, List<Message> messages) {
+        messages.add(new UserMessage(userMessage));
+        StringBuilder assistMessageBuilder = new StringBuilder();
+
+        return chatClient.prompt(new Prompt(messages))
+                .stream()
+                .content()
+                .doOnNext(assistMessageBuilder::append)
+                .doFinally(signalType -> {
+                            messages.add(new AssistantMessage(assistMessageBuilder.toString()));
+                            System.out.println(assistMessageBuilder);
+                            LocalCache.CACHE.put(chatId, messages);
+                        }
+                );
+
     }
 
 }
