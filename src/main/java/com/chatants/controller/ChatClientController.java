@@ -16,9 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @Description: AI聊天接口
- * @Author: Simon Mau
- * @Date: 2024/6/17 15:36
+ * @description AI聊天接口
+ * @author Simon Mau
+ * @date 2024/6/17 15:36
  */
 
 @RestController
