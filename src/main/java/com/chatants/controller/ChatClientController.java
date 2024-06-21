@@ -19,6 +19,7 @@ import java.util.List;
  * @description AI聊天接口
  * @author Simon Mau
  * @date 2024/6/17 15:36
+ * TODO 流式聊天接口有BUG,会丢字,特别是开始的几轮回答
  */
 
 @RestController
