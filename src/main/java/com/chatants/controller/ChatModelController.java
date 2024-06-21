@@ -35,9 +35,12 @@ public class ChatModelController {
 
     @GetMapping("/ai/generateStream")
     public Flux<ChatResponse> generateStream(
-            @RequestParam(value = "message", defaultValue = "Tell me a joke") String message
+            @RequestParam(value = "message", defaultValue = "用一个四字成语夸我") String message
     ) {
         Prompt prompt = new Prompt(new UserMessage(message));
-        return openAiChatModel.stream(prompt);
+        StringBuilder assistantMessage = new StringBuilder();
+        return openAiChatModel.stream(prompt)
+                .doOnNext(chatResponse -> assistantMessage.append(chatResponse.getResult().getOutput().getContent()))
+                .doOnComplete(() -> System.out.println("assistantMessage = " + assistantMessage));
     }
 }
