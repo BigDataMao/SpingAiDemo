@@ -92,7 +92,9 @@ public class ChatClientController {
 
     private Flux<String> getStringFlux(
             @RequestParam(value = "userMessage", defaultValue = "给我讲个笑话") String userMessage,
-            @RequestParam("chatId") String chatId, List<Message> messages) {
+            @RequestParam("chatId") String chatId,
+            List<Message> messages
+    ) {
         messages.add(new UserMessage(userMessage));
         StringBuilder assistMessageBuilder = new StringBuilder();
 
