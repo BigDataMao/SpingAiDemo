@@ -81,7 +81,7 @@ public class ChatClientController {
         // 本地缓存可以使用redis,也可以使用内存缓存
         if (LocalCache.CACHE.get(chatId) != null) {
             // 从缓存中读取上一轮对话的chatId,然后继续对话
-            List<Message> messages = (List<Message>) LocalCache.CACHE.get(chatId);
+            List<Message> messages = LocalCache.getMessageListFromCache(chatId);
             return getStringFlux(userMessage, chatId, messages);
         } else {
             // 本地为空,则发送新的对话请求,并缓存对话
