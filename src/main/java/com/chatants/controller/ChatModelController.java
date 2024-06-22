@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -67,12 +66,8 @@ public class ChatModelController {
             @RequestParam(value = "message", defaultValue = "用一个四字成语夸我") String message,
             @RequestParam(value = "sessionId", defaultValue = "1") String sessionId
     ) {
-        List<Message> messages = (List<Message>)LocalCache.CACHE.get(sessionId);
-        if (messages == null) {
-            messages = List.of(new UserMessage(message));
-        }else {
-            messages.add(new UserMessage(message));
-        }
+        List<Message> messages = LocalCache.getMessageListFromCache(sessionId);
+        messages.add(new UserMessage(message));
         System.out.printf("messages = %s%n", messages);
 
         return getAnswer(sessionId, messages);
@@ -81,13 +76,16 @@ public class ChatModelController {
 
     public Flux<ChatResponse> getAnswer(
             String sessionId,
-            List<Message> incomingMessages
+            List<Message> messages
     ){
-        List<Message> messages = new ArrayList<>(incomingMessages);
         StringBuilder answer = new StringBuilder();
         Prompt prompt = new Prompt(messages);
         return openAiChatModel.stream(prompt)
-                .doOnNext(chatResponse -> answer.append(chatResponse.getResult().getOutput().getContent()))
+                .doOnNext(chatResponse -> {
+                    String tmpContent = chatResponse.getResult().getOutput().getContent();
+                    // 通字符串会带双引号,如果是null则不会带双引号.通常结尾的null不要加到字符串中
+                    if (tmpContent != null){answer.append(tmpContent);}
+                })
                 .doOnComplete(() -> {
                     System.out.printf("answer = %s%n", answer);
                     messages.add(new AssistantMessage(answer.toString()));
