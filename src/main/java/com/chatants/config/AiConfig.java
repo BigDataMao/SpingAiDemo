@@ -17,31 +17,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AiConfig {
 
-    @Value("${spring.ai.openai.base-url}")
-    private String baseUrl;
-
-    @Value("${spring.ai.openai.api-key}")
-    private String apiKey;
 
     @Bean
     ChatClient chatClient(ChatClient.Builder builder) {
         return builder.defaultSystem("You are a friendly chat bot.")
                 .build();
-    }
-
-    /**
-     * 手动配置OpenAiChatModel
-     */
-    @Bean("openAiChatModel")
-    OpenAiChatModel openAiChatModel() {
-
-        var openAiApi = new OpenAiApi(baseUrl, apiKey);
-        var openAiChatOptions = OpenAiChatOptions.builder()
-                .withModel("gpt-4o")
-                .withTemperature(0.4F)
-                .withMaxTokens(200)
-                .build();
-        return new OpenAiChatModel(openAiApi, openAiChatOptions);
     }
 
 }
