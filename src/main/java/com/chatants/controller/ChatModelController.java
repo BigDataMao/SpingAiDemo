@@ -1,13 +1,14 @@
 package com.chatants.controller;
 
 import com.chatants.config.LocalCache;
-import org.springframework.ai.chat.messages.AssistantMessage;
+import com.chatants.service.ChatModelService;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,11 +24,16 @@ import java.util.Map;
  */
 @RestController
 public class ChatModelController {
+
     public final OpenAiChatModel openAiChatModel;
+    public final ChatModelService chatModelService;
 
     @Autowired
-    public ChatModelController(OpenAiChatModel openAiChatModel) {
+    public ChatModelController(
+            OpenAiChatModel openAiChatModel,
+            ChatModelService chatModelService) {
         this.openAiChatModel = openAiChatModel;
+        this.chatModelService = chatModelService;
     }
 
     /**
@@ -70,27 +76,6 @@ public class ChatModelController {
         messages.add(new UserMessage(message));
         System.out.printf("messages = %s%n", messages);
 
-        return getAnswer(sessionId, messages);
-    }
-
-
-    public Flux<ChatResponse> getAnswer(
-            String sessionId,
-            List<Message> messages
-    ){
-        StringBuilder answer = new StringBuilder();
-        Prompt prompt = new Prompt(messages);
-        return openAiChatModel.stream(prompt)
-                .doOnNext(chatResponse -> {
-                    String tmpContent = chatResponse.getResult().getOutput().getContent();
-                    // 通字符串会带双引号,如果是null则不会带双引号.通常结尾的null不要加到字符串中
-                    if (tmpContent != null){answer.append(tmpContent);}
-                })
-                .doOnComplete(() -> {
-                    System.out.printf("answer = %s%n", answer);
-                    messages.add(new AssistantMessage(answer.toString()));
-                    LocalCache.CACHE.put(sessionId, messages);
-                });
-
+        return chatModelService.getAnswer(sessionId, messages);
     }
 }
