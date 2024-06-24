@@ -17,11 +17,18 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AiConfig {
 
-
     @Bean
     ChatClient chatClient(ChatClient.Builder builder) {
         return builder.defaultSystem("You are a friendly chat bot.")
                 .build();
+    }
+
+    @Bean
+    OpenAiApi openAiApi(
+            @Value("${mau.ai.openai.base-url}") String baseUrl,
+            @Value("${mau.ai.openai.api-key}") String apiKey
+    ) {
+        return new OpenAiApi(baseUrl, apiKey);
     }
 
 }

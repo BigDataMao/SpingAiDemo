@@ -8,7 +8,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,9 +17,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * ChatModel的API接口测试用例
+ *
  * @author Simon Mau
- * @description ChatModel的API接口测试用例
- * @date 2024/6/20 21:44
  */
 @RestController
 public class ChatModelController {
@@ -37,7 +36,7 @@ public class ChatModelController {
     }
 
     /**
-     * @description 测试生成聊天
+     * 测试生成聊天
      * @param message  用户输入的消息
      */
     @GetMapping("/ai/generate")
@@ -48,7 +47,8 @@ public class ChatModelController {
     }
 
     /**
-     * @description 流式返回聊天,并能后端留存数据
+     * 流式返回聊天,并能后端留存数据
+     *
      * @param message  用户输入的消息
      */
     @GetMapping("/ai/generateStream")
@@ -63,19 +63,25 @@ public class ChatModelController {
     }
 
     /**
-     * @description 流式返回聊天,并能后端留存数据
+     * 流式返回聊天,并能后端留存数据
      * @param message  用户输入的消息
      * @param sessionId  会话ID
      */
     @GetMapping("/ai/generateStreamWithSessionId")
     public Flux<ChatResponse> generateStreamWithSessionId(
             @RequestParam(value = "message", defaultValue = "用一个四字成语夸我") String message,
-            @RequestParam(value = "sessionId", defaultValue = "1") String sessionId
+            @RequestParam(value = "sessionId", defaultValue = "1") String sessionId,
+            @RequestParam(value = "model", defaultValue = "gpt-3.5-turbo") String model
     ) {
+        // 处理参数前后可能的双引号,message仅开头结尾可能会有
+        message = message;
+        sessionId = sessionId.replaceAll("\"", "");
+        model = model.replaceAll("\"", "");
+
         List<Message> messages = LocalCache.getMessageListFromCache(sessionId);
         messages.add(new UserMessage(message));
         System.out.printf("messages = %s%n", messages);
 
-        return chatModelService.getAnswer(sessionId, messages);
+        return chatModelService.getAnswer(sessionId, messages, model);
     }
 }
